@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./artifacts/trello-tools",
+    "rootDir": "."
+  },
+  "include": ["src/core/**/*.ts", "src/integrations/trello/**/*.ts", "tools/trello/**/*.ts"],
+  "exclude": ["integrations/**", "reporters/**", "scripts/**"]
+}

@@ -1,0 +1,83 @@
+{
+  "applicationId": "realworld",
+  "cases": [
+    {
+      "caseId": "RW-AUTH-001",
+      "title": "Valid login with an execution-scoped user",
+      "description": "A user created through the public API can sign in through the UI.",
+      "preconditions": ["The frontend and API are available", "A unique synthetic user is registered for the test"],
+      "inputData": { "user": "generated per execution" },
+      "steps": [{ "order": 1, "action": "Open sign in and submit the generated credentials", "expectedResult": "The authenticated username is visible" }],
+      "expectedResults": ["The user is authenticated and visible in primary navigation"],
+      "priority": "high",
+      "type": "functional",
+      "tags": ["smoke", "auth"],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "RW-AUTH-002",
+      "title": "Invalid login displays a useful error",
+      "description": "Invalid synthetic credentials are rejected without creating persistent authentication state.",
+      "preconditions": ["The frontend and API are available"],
+      "inputData": { "credentials": "unique and intentionally invalid" },
+      "steps": [{ "order": 1, "action": "Submit invalid credentials", "expectedResult": "An invalid credentials message is displayed" }],
+      "expectedResults": ["Authentication is rejected with a visible error"],
+      "priority": "high",
+      "type": "negative",
+      "tags": ["smoke", "auth"],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "RW-ARTICLE-001",
+      "title": "Create an article",
+      "description": "An authenticated generated user publishes a unique article through the UI.",
+      "preconditions": ["A unique synthetic user is registered and authenticated"],
+      "inputData": { "article": "unique synthetic title, description, body, and tag" },
+      "steps": [{ "order": 1, "action": "Publish a unique article from the editor", "expectedResult": "The article detail and API persist all supplied fields" }],
+      "expectedResults": ["Title, description, content, and author are persisted"],
+      "priority": "critical",
+      "type": "functional",
+      "tags": ["smoke", "article"],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "RW-ARTICLE-002",
+      "title": "Edit an article",
+      "description": "An authenticated author edits an execution-scoped article and verifies persistence.",
+      "preconditions": ["A unique synthetic user and article exist"],
+      "inputData": { "article": "initial and updated synthetic values" },
+      "steps": [{ "order": 1, "action": "Open edit, replace article values, and publish", "expectedResult": "Updated values persist in UI and API" }],
+      "expectedResults": ["The updated title, description, and content persist"],
+      "priority": "high",
+      "type": "functional",
+      "tags": ["article"],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "RW-COMMENT-001",
+      "title": "Create and delete a comment",
+      "description": "An authenticated generated user adds and removes a unique comment on an execution-scoped article.",
+      "preconditions": ["A unique synthetic user and article exist"],
+      "inputData": { "comment": "unique synthetic text" },
+      "steps": [{ "order": 1, "action": "Post a comment and delete it", "expectedResult": "The comment appears and is then removed" }],
+      "expectedResults": ["The comment lifecycle is visible in the UI"],
+      "priority": "medium",
+      "type": "functional",
+      "tags": ["comment"],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "RW-INCIDENT-001",
+      "title": "Synthetic article deletion failure",
+      "description": "A controlled DELETE interception produces an HTTP 500 and a local simulated incident preview.",
+      "preconditions": ["A unique synthetic user and article exist", "Network interception is enabled"],
+      "inputData": { "failure": "DELETE article returns HTTP 500" },
+      "steps": [{ "order": 1, "action": "Intercept only article DELETE and attempt deletion", "expectedResult": "The controlled assertion fails and produces preview evidence" }],
+      "expectedResults": ["SIMULATED_DEMO_FAILURE is recorded locally and never reported externally"],
+      "priority": "high",
+      "type": "synthetic-failure",
+      "tags": ["incident", "simulated"],
+      "automationStatus": "automated"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./artifacts/quality",
+    "rootDir": "."
+  },
+  "include": [
+    "src/core/cases/**/*.ts",
+    "tools/quality/validate-cases.ts"
+  ],
+  "exclude": ["integrations/**", "reporters/**", "scripts/**"]
+}

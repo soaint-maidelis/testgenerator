@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "@playwright/test"],
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@apps/*": ["./src/apps/*"]
+    }
+  },
+  "include": [
+    "playwright.config.ts",
+    "tests/**/*.ts",
+    "src/**/*.ts",
+    "tools/input/**/*.ts",
+    "tools/generation/**/*.ts"
+  ],
+  "exclude": ["integrations/**", "reporters/**", "scripts/**"]
+}

@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": false, "outDir": "./artifacts/generation-tools", "rootDir": "." },
+  "include": [
+    "src/core/cases/**/*.ts", "src/core/input/**/*.ts", "src/core/strategy/**/*.ts",
+    "src/input-adapters/user-story/**/*.ts", "src/apps/saucedemo/strategy/**/*.ts", "tools/generation/**/*.ts"
+  ],
+  "exclude": ["integrations/**", "reporters/**", "scripts/**"]
+}

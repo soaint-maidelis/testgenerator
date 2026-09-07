@@ -1,0 +1,9 @@
+[
+  {
+    "id": "default",
+    "envPrefix": "APP",
+    "projectName": "chromium",
+    "testMatch": ["**/*.spec.ts"],
+    "testIgnore": ["**/__disabled__/**"]
+  }
+]

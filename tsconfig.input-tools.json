@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./artifacts/input-tools",
+    "rootDir": "."
+  },
+  "include": [
+    "src/core/cases/**/*.ts",
+    "src/core/input/**/*.ts",
+    "src/input-adapters/**/*.ts",
+    "tools/input/**/*.ts"
+  ],
+  "exclude": ["integrations/**", "reporters/**", "scripts/**"]
+}

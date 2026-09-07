@@ -1,0 +1,18 @@
+{
+  "applicationId": "saucedemo",
+  "cases": [
+    {
+      "caseId": "SD-CART-001",
+      "title": "Add product to cart",
+      "description": "A selected SauceDemo product updates badge and cart content.",
+      "preconditions": ["The standard user is authenticated"],
+      "inputData": { "product": "Sauce Labs Backpack" },
+      "steps": [{ "order": 1, "action": "Add Sauce Labs Backpack and open cart", "expectedResult": "Badge and cart show the selected product" }],
+      "expectedResults": ["Cart badge is updated", "Selected product is visible in cart"],
+      "priority": "critical",
+      "type": "functional",
+      "tags": ["smoke", "cart"],
+      "automationStatus": "candidate"
+    }
+  ]
+}

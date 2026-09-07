@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./artifacts/unit",
+    "rootDir": "."
+  },
+  "include": [
+    "src/core/**/*.ts",
+    "src/adapters/**/*.ts",
+    "src/input-adapters/**/*.ts",
+    "src/integrations/**/*.ts",
+    "tests/unit/**/*.ts"
+  ],
+  "exclude": ["integrations/**", "reporters/**", "scripts/**"]
+}

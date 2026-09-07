@@ -1,0 +1,507 @@
+{
+  "applicationId": "saucedemo",
+  "cases": [
+    {
+      "caseId": "SD-AUTH-001",
+      "title": "Valid standard user login",
+      "description": "The public standard user opens inventory.",
+      "preconditions": [
+        "SauceDemo is available"
+      ],
+      "inputData": {
+        "user": "standard_user"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Submit standard user credentials",
+          "expectedResult": "Inventory is displayed"
+        }
+      ],
+      "expectedResults": [
+        "Authentication succeeds"
+      ],
+      "priority": "critical",
+      "type": "functional",
+      "tags": [
+        "smoke",
+        "auth"
+      ],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "SD-AUTH-002",
+      "title": "Locked user login rejection",
+      "description": "The public locked user is rejected.",
+      "preconditions": [
+        "SauceDemo is available"
+      ],
+      "inputData": {
+        "user": "locked_out_user"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Submit locked user credentials",
+          "expectedResult": "A locked-out message is shown"
+        }
+      ],
+      "expectedResults": [
+        "Authentication is rejected"
+      ],
+      "priority": "high",
+      "type": "negative",
+      "tags": [
+        "auth"
+      ],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "SD-CART-001",
+      "title": "Add product to cart",
+      "description": "A selected product updates badge and cart content.",
+      "preconditions": [
+        "The standard user is authenticated"
+      ],
+      "inputData": {
+        "product": "Sauce Labs Backpack"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Add the product and open cart",
+          "expectedResult": "Badge and cart show the product"
+        }
+      ],
+      "expectedResults": [
+        "Cart contains exactly the selected product"
+      ],
+      "priority": "critical",
+      "type": "functional",
+      "tags": [
+        "smoke",
+        "cart"
+      ],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "SD-CHECKOUT-001",
+      "title": "Complete checkout",
+      "description": "A standard user completes a purchase.",
+      "preconditions": [
+        "One product is in the cart"
+      ],
+      "inputData": {
+        "customer": "synthetic per execution"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Enter checkout data and finish",
+          "expectedResult": "Order confirmation is displayed"
+        }
+      ],
+      "expectedResults": [
+        "Checkout completes successfully"
+      ],
+      "priority": "critical",
+      "type": "functional",
+      "tags": [
+        "smoke",
+        "checkout"
+      ],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "SD-INCIDENT-001",
+      "title": "Synthetic empty-cart failure",
+      "description": "An artificial cart condition creates a local preview.",
+      "preconditions": [
+        "The standard user is authenticated with an empty cart"
+      ],
+      "inputData": {
+        "failure": "Expected badge is intentionally absent"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Evaluate the artificial cart condition",
+          "expectedResult": "Preview evidence is generated"
+        }
+      ],
+      "expectedResults": [
+        "SIMULATED_DEMO_FAILURE is recorded locally"
+      ],
+      "priority": "high",
+      "type": "synthetic-failure",
+      "tags": [
+        "incident",
+        "simulated"
+      ],
+      "automationStatus": "automated"
+    },
+    {
+      "caseId": "XL-SD-AUTH-001",
+      "title": "Valid standard user login",
+      "description": "A valid standard user signs in and reaches the inventory page.",
+      "preconditions": [
+        "SauceDemo is available"
+      ],
+      "inputData": {
+        "user": "standard_user"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Submit standard user credentials",
+          "expectedResult": "Inventory is displayed"
+        }
+      ],
+      "expectedResults": [
+        "Authentication succeeds",
+        "Inventory page is visible"
+      ],
+      "priority": "critical",
+      "type": "functional",
+      "tags": [
+        "smoke",
+        "auth",
+        "excel"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "EXCEL",
+        "file": "saucedemo-cases.xlsx",
+        "sourceId": "XL-SD-AUTH-001",
+        "row": 2,
+        "originalReference": "Authentication"
+      },
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "caseId": "XL-SD-CART-001",
+      "title": "Add product to cart",
+      "description": "A selected SauceDemo product updates badge and cart content.",
+      "preconditions": [
+        "The standard user is authenticated"
+      ],
+      "inputData": {
+        "product": "Sauce Labs Backpack"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Add Sauce Labs Backpack and open cart",
+          "expectedResult": "Badge and cart show the selected product"
+        }
+      ],
+      "expectedResults": [
+        "Cart badge is updated",
+        "Selected product is visible in cart"
+      ],
+      "priority": "high",
+      "type": "functional",
+      "tags": [
+        "cart",
+        "excel"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "EXCEL",
+        "file": "saucedemo-cases.xlsx",
+        "sourceId": "XL-SD-CART-001",
+        "row": 3,
+        "originalReference": "Shopping cart"
+      },
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "caseId": "XL-SD-CHECKOUT-001",
+      "title": "Complete checkout",
+      "description": "A standard user completes a purchase for one product.",
+      "preconditions": [
+        "The standard user is authenticated",
+        "One product is in the cart"
+      ],
+      "inputData": {
+        "product": "Sauce Labs Backpack",
+        "firstName": "Demo",
+        "lastName": "QA",
+        "postalCode": "15001"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Open checkout and enter customer data",
+          "expectedResult": "Checkout overview is displayed"
+        },
+        {
+          "order": 2,
+          "action": "Finish the order",
+          "expectedResult": "Order confirmation is displayed"
+        }
+      ],
+      "expectedResults": [
+        "Checkout completes successfully",
+        "Order confirmation is displayed"
+      ],
+      "priority": "high",
+      "type": "functional",
+      "tags": [
+        "checkout",
+        "excel"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "EXCEL",
+        "file": "saucedemo-cases.xlsx",
+        "sourceId": "XL-SD-CHECKOUT-001",
+        "row": 4,
+        "originalReference": "Checkout"
+      },
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "caseId": "XL-SD-INCIDENT-001",
+      "title": "Controlled missing button failure",
+      "description": "A simulated cart condition validates incident evidence when an expected control is absent.",
+      "preconditions": [
+        "The standard user is authenticated with an empty cart"
+      ],
+      "inputData": {
+        "failure": "Expected remove button is intentionally absent"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Evaluate the artificial cart condition",
+          "expectedResult": "Preview evidence is generated"
+        }
+      ],
+      "expectedResults": [
+        "SIMULATED_DEMO_FAILURE is recorded locally",
+        "Incident evidence is available"
+      ],
+      "priority": "high",
+      "type": "synthetic-failure",
+      "tags": [
+        "incident",
+        "simulated",
+        "excel"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "EXCEL",
+        "file": "saucedemo-cases.xlsx",
+        "sourceId": "XL-SD-INCIDENT-001",
+        "row": 5,
+        "originalReference": "Controlled incident"
+      },
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "caseId": "US-SD-CART-001-AC-1",
+      "title": "Shopping cart - criterion 1",
+      "description": "add products to my cart",
+      "preconditions": [],
+      "inputData": {
+        "role": "customer",
+        "benefit": "I can purchase them later"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Product can be added to cart.",
+          "expectedResult": "Product can be added to cart."
+        }
+      ],
+      "expectedResults": [
+        "Product can be added to cart."
+      ],
+      "priority": "unreviewed",
+      "type": "candidate",
+      "tags": [
+        "user-story"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "USER_STORY",
+        "file": "cart-story.md",
+        "sourceId": "US-SD-CART-001"
+      },
+      "sourceType": "USER_STORY",
+      "reviewStatus": "APPROVED",
+      "approvedAt": "2026-09-07T16:48:57.520Z"
+    },
+    {
+      "caseId": "US-SD-CART-001-AC-2",
+      "title": "Shopping cart - criterion 2",
+      "description": "add products to my cart",
+      "preconditions": [],
+      "inputData": {
+        "role": "customer",
+        "benefit": "I can purchase them later"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Cart counter is updated.",
+          "expectedResult": "Cart counter is updated."
+        }
+      ],
+      "expectedResults": [
+        "Cart counter is updated."
+      ],
+      "priority": "high",
+      "type": "candidate",
+      "tags": [
+        "user-story"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "USER_STORY",
+        "file": "cart-story.md",
+        "sourceId": "US-SD-CART-001"
+      },
+      "sourceType": "USER_STORY",
+      "reviewStatus": "APPROVED",
+      "approvedAt": "2026-09-07T16:48:58.344Z"
+    },
+    {
+      "caseId": "US-SD-CART-001-AC-3",
+      "title": "Shopping cart - criterion 3",
+      "description": "add products to my cart",
+      "preconditions": [],
+      "inputData": {
+        "role": "customer",
+        "benefit": "I can purchase them later"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "Added product is visible in cart.",
+          "expectedResult": "Added product is visible in cart."
+        }
+      ],
+      "expectedResults": [
+        "Added product is visible in cart."
+      ],
+      "priority": "unreviewed",
+      "type": "candidate",
+      "tags": [
+        "user-story"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "USER_STORY",
+        "file": "cart-story.md",
+        "sourceId": "US-SD-CART-001"
+      },
+      "sourceType": "USER_STORY",
+      "reviewStatus": "APPROVED",
+      "approvedAt": "2026-09-07T16:48:59.159Z"
+    },
+    {
+      "caseId": "US-SD-CART-REMOVE-001-AC-1",
+      "title": "Eliminar producto del carrito - criterion 1",
+      "description": "eliminar un producto de mi carrito",
+      "preconditions": [],
+      "inputData": {
+        "role": "cliente",
+        "benefit": "poder corregir mi selección antes de realizar la compra"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "El usuario puede eliminar un producto del carrito.",
+          "expectedResult": "El usuario puede eliminar un producto del carrito."
+        }
+      ],
+      "expectedResults": [
+        "El usuario puede eliminar un producto del carrito."
+      ],
+      "priority": "high",
+      "type": "candidate",
+      "tags": [
+        "user-story"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "USER_STORY",
+        "file": "remove-cart-item.md",
+        "sourceId": "US-SD-CART-REMOVE-001"
+      },
+      "sourceType": "USER_STORY",
+      "reviewStatus": "APPROVED",
+      "approvedAt": "2026-09-07T16:49:00.031Z"
+    },
+    {
+      "caseId": "US-SD-CART-REMOVE-001-AC-2",
+      "title": "Eliminar producto del carrito - criterion 2",
+      "description": "eliminar un producto de mi carrito",
+      "preconditions": [],
+      "inputData": {
+        "role": "cliente",
+        "benefit": "poder corregir mi selección antes de realizar la compra"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "El producto eliminado deja de mostrarse en el carrito.",
+          "expectedResult": "El producto eliminado deja de mostrarse en el carrito."
+        }
+      ],
+      "expectedResults": [
+        "El producto eliminado deja de mostrarse en el carrito."
+      ],
+      "priority": "unreviewed",
+      "type": "candidate",
+      "tags": [
+        "user-story"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "USER_STORY",
+        "file": "remove-cart-item.md",
+        "sourceId": "US-SD-CART-REMOVE-001"
+      },
+      "sourceType": "USER_STORY",
+      "reviewStatus": "APPROVED",
+      "approvedAt": "2026-09-07T16:49:00.838Z"
+    },
+    {
+      "caseId": "US-SD-CART-REMOVE-001-AC-3",
+      "title": "Eliminar producto del carrito - criterion 3",
+      "description": "eliminar un producto de mi carrito",
+      "preconditions": [],
+      "inputData": {
+        "role": "cliente",
+        "benefit": "poder corregir mi selección antes de realizar la compra"
+      },
+      "steps": [
+        {
+          "order": 1,
+          "action": "El contador del carrito se actualiza después de eliminar el producto.",
+          "expectedResult": "El contador del carrito se actualiza después de eliminar el producto."
+        }
+      ],
+      "expectedResults": [
+        "El contador del carrito se actualiza después de eliminar el producto."
+      ],
+      "priority": "unreviewed",
+      "type": "candidate",
+      "tags": [
+        "user-story"
+      ],
+      "automationStatus": "automated",
+      "source": {
+        "type": "USER_STORY",
+        "file": "remove-cart-item.md",
+        "sourceId": "US-SD-CART-REMOVE-001"
+      },
+      "sourceType": "USER_STORY",
+      "reviewStatus": "APPROVED",
+      "approvedAt": "2026-09-07T16:49:01.720Z"
+    }
+  ]
+}

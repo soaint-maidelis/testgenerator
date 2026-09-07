@@ -1,0 +1,53 @@
+{
+  "name": "testgenerator-qa-accelerator",
+  "version": "2.0.0",
+  "private": true,
+  "description": "A governed QA automation accelerator built with Playwright and TypeScript",
+  "type": "commonjs",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit",
+    "test:unit": "tsc --project tsconfig.unit.json && node tools/quality/run-unit-tests.cjs",
+    "cases:validate": "tsc --project tsconfig.quality.json && node artifacts/quality/tools/quality/validate-cases.js",
+    "audit:boundaries": "node tools/quality/audit-boundaries.cjs",
+    "audit:sanitize": "node tools/quality/audit-sanitize.cjs",
+    "demo:preflight": "node tools/demo/demo-cli.cjs preflight",
+    "demo:full": "node tools/demo/demo-cli.cjs full",
+    "demo:list": "node tools/demo/demo-cli.cjs list",
+    "demo:smoke": "node tools/demo/demo-cli.cjs smoke",
+    "demo:headed": "node tools/demo/demo-cli.cjs headed",
+    "demo:incident": "node tools/demo/demo-cli.cjs incident",
+    "demo:local:start": "node tools/demo/demo-local-server.cjs start",
+    "demo:local:stop": "node tools/demo/demo-local-server.cjs stop",
+    "demo:local": "node tools/demo/demo-cli.cjs local",
+    "demo:local:headed": "node tools/demo/demo-cli.cjs local-headed",
+    "demo:sauce": "node tools/demo/demo-cli.cjs sauce",
+    "demo:sauce:headed": "node tools/demo/demo-cli.cjs sauce-headed",
+    "import:excel": "node tools/input/input-cli.cjs excel",
+    "import:json": "node tools/input/input-cli.cjs json",
+    "import:story": "node tools/input/input-cli.cjs story",
+    "demo:inputs": "node tools/input/input-cli.cjs demo",
+    "candidate:approve": "node tools/generation/generation-cli.cjs approve",
+    "generation:plan": "node tools/generation/generation-cli.cjs plan",
+    "tests:group": "node tools/generation/generation-cli.cjs group",
+    "demo:generation": "node tools/generation/generation-cli.cjs demo-generation",
+    "demo:strategy": "node tools/generation/generation-cli.cjs demo-strategy",
+    "report:executive": "node tools/demo/demo-cli.cjs report",
+    "app:scaffold": "node tools/demo/demo-cli.cjs scaffold",
+    "trello:setup": "node tools/trello/trello-cli.cjs setup",
+    "trello:test": "node tools/trello/trello-cli.cjs test",
+    "demo:trello-incident": "node tools/trello/trello-cli.cjs demo-incident",
+    "testgenerator": "node tools/ux/testgenerator.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^25.0.9",
+    "csv-parse": "^6.1.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "xlsx": "^0.18.5"
+  }
+}
