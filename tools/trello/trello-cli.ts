@@ -63,6 +63,10 @@ async function submitPreparedIncident(inputFile: string): Promise<void> {
   console.log(`List name: ${list.name}`);
   console.log('Marker verified: YES');
   console.log('Card verified: YES');
+  for (const attachment of artifact.attachments) {
+    const detail = attachment.message ? ` (${attachment.message})` : '';
+    console.log(`Attachment ${attachment.kind}: ${attachment.status}${detail}`);
+  }
   console.log(`Card URL: ${artifact.path}`);
 }
 

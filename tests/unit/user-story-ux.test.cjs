@@ -420,15 +420,16 @@ test('incident UX preserves local evidence without calling Trello', async () => 
 test('incident UX explicitly registers in Trello, shows its URL, and can open it', async () => {
   let opened = '';
   const setup = incidentDependencies(['1', '1'], {
-    register: async () => 'Board name: TestGenerator - Demo QA\nList name: Detected\nMarker verified: YES\nCard verified: YES\nCard URL: https://trello.com/c/example',
+    register: async () => 'Board name: Demo-Playwright\nList name: Bugs\nMarker verified: YES\nCard verified: YES\nAttachment screenshot: LINKED\nAttachment video: LINKED\nCard URL: https://trello.com/c/example',
     openCard: async (url) => { opened = url; return true; },
   });
   const result = await incidentFlow(setup.dependencies);
   assert.equal(result.status, 'TRELLO_CREATED');
   assert.equal(result.boardFound, true);
   assert.equal(result.listFound, true);
+  assert.deepEqual(result.attachments, [{ kind: 'screenshot', status: 'LINKED' }, { kind: 'video', status: 'LINKED' }]);
   assert.equal(opened, 'https://trello.com/c/example');
-  assert.match(setup.output.join('\n'), /Incidencia registrada en Trello[\s\S]*https:\/\/trello.com\/c\/example[\s\S]*Lista:\nDetected/);
+  assert.match(setup.output.join('\n'), /Incidencia registrada en Trello[\s\S]*https:\/\/trello.com\/c\/example[\s\S]*Lista:\nBugs[\s\S]*screenshot: LINKED[\s\S]*video: LINKED/);
 });
 
 test('incident UX reports a sanitized Trello failure and preserves local evidence', async () => {

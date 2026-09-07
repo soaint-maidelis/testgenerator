@@ -21,7 +21,7 @@ export interface AppRole {
 
 export type TraceEvidenceMode = 'off' | 'retain-on-failure';
 export type ScreenshotEvidenceMode = 'off' | 'only-on-failure';
-export type VideoEvidenceMode = 'off' | 'retain-on-failure';
+export type VideoEvidenceMode = 'off' | 'retain-on-failure' | 'on';
 
 export interface EvidencePolicy {
   readonly trace: TraceEvidenceMode;

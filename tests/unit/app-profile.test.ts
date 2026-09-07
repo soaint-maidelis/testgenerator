@@ -24,6 +24,16 @@ test('accepts optional API and declarative capability extensions', () => {
   assert.equal(profile.capabilities.customCapability, true);
 });
 
+test('accepts video retention for successful executions when explicitly enabled', () => {
+  const profile = normalizeAppProfile({
+    id: 'fixture',
+    displayName: 'Fixture',
+    baseURL: 'https://fixture.invalid',
+    evidencePolicy: { video: 'on' },
+  });
+  assert.equal(profile.evidencePolicy.video, 'on');
+});
+
 test('rejects invalid IDs and URLs', () => {
   const errors = getAppProfileValidationErrors({ id: '', displayName: 'Fixture', baseURL: 'not-a-url' });
   assert.ok(errors.some((error) => error.startsWith('id ')));

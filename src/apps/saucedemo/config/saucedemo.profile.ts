@@ -12,6 +12,6 @@ export const sauceDemoProfile = normalizeAppProfile({
   evidencePolicy: {
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: 'on',
   },
 });

@@ -12,7 +12,7 @@ const DECLARATIVE_KEY_PATTERN = /^[a-z][A-Za-z0-9]*$/;
 const EVIDENCE_VALUES = {
   trace: new Set<EvidencePolicy['trace']>(['off', 'retain-on-failure']),
   screenshot: new Set<EvidencePolicy['screenshot']>(['off', 'only-on-failure']),
-  video: new Set<EvidencePolicy['video']>(['off', 'retain-on-failure']),
+  video: new Set<EvidencePolicy['video']>(['off', 'retain-on-failure', 'on']),
 } as const;
 
 /** TG-REQ-002: normalize a validated partial profile with safe defaults. */

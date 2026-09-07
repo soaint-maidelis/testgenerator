@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import test from 'node:test';
 
 import type { IncidentModel } from '../../src/core/incidents/incident.types';
@@ -47,6 +50,46 @@ test('provider maps IncidentModel and returns the real card URL contract offline
   const artifact = await new TrelloIncidentProvider(client, 'list-id').writePreview(incident);
   assert.match(capturedName, /^\[SIMULATED_DEMO_FAILURE\]/);
   assert.equal(artifact.path, 'https://trello.com/c/example');
+});
+
+test('provider uploads available screenshot, video, and trace evidence to Trello', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'tg-trello-'));
+  const screenshot = join(directory, 'failure.png');
+  const video = join(directory, 'video.webm');
+  const trace = join(directory, 'trace.zip');
+  await writeFile(screenshot, 'png');
+  await writeFile(video, 'webm');
+  await writeFile(trace, 'zip');
+
+  const uploads: string[] = [];
+  const client = {
+    createCard: async () => ({ id: 'card-id', url: 'https://trello.com/c/example' }),
+    uploadAttachment: async (_cardId: string, _filePath: string, fileName?: string) => {
+      uploads.push(fileName ?? '');
+      return { id: `attachment-${uploads.length}`, name: fileName ?? '', url: 'https://trello.com/attachment' };
+    },
+  } as unknown as TrelloClient;
+
+  try {
+    const artifact = await new TrelloIncidentProvider(client, 'list-id').writePreview({
+      ...incident,
+      evidence: [
+        { kind: 'screenshot', path: screenshot },
+        { kind: 'video', path: video },
+        { kind: 'trace', path: trace },
+        { kind: 'other', path: 'playwright-report/index.html' },
+      ],
+    });
+
+    assert.deepEqual(artifact.attachments.map((attachment) => attachment.status), ['LINKED', 'LINKED', 'LINKED']);
+    assert.deepEqual(uploads, [
+      'SD-INCIDENT-001-screenshot-failure.png',
+      'SD-INCIDENT-001-video-video.webm',
+      'SD-INCIDENT-001-trace-trace.zip',
+    ]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('client failures never leak API key or token', async () => {

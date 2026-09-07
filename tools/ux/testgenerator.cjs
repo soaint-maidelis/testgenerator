@@ -416,6 +416,7 @@ function codexClipboardInstruction(handoff) {
 }
 function writeCodexPrompt(handoff) {
   const output = handoff.output.replace(/\.md$/i, '.prompt.txt');
+  fs.mkdirSync(path.dirname(output), { recursive: true });
   fs.writeFileSync(output, `${codexClipboardInstruction(handoff)}\n`);
   return output;
 }
@@ -949,10 +950,13 @@ function sanitizeIncidentMessage(error, environment = process.env) {
 function parseTrelloRegistration(output) {
   return {
     url: output.match(/Card URL:\s*(https:\/\/trello\.com\/\S+)/)?.[1],
-    boardFound: output.includes('Board name: TestGenerator - Demo QA'),
-    listFound: output.includes('List name: Detected'),
+    boardName: output.match(/^Board name:\s*(.+)$/m)?.[1],
+    listName: output.match(/^List name:\s*(.+)$/m)?.[1],
+    boardFound: /^Board name:\s*\S.+$/m.test(output),
+    listFound: /^List name:\s*\S.+$/m.test(output),
     markerVerified: output.includes('Marker verified: YES'),
     cardVerified: output.includes('Card verified: YES'),
+    attachments: [...output.matchAll(/^Attachment\s+(\w+):\s+([A-Z_]+)/gm)].map((match) => ({ kind: match[1], status: match[2] })),
   };
 }
 async function incidentFlow(dependencies = {}) {
@@ -979,7 +983,10 @@ async function incidentFlow(dependencies = {}) {
     const registration = parseTrelloRegistration(await register(incident));
     if (!registration.url || !registration.boardFound || !registration.listFound || !registration.markerVerified || !registration.cardVerified) throw new Error('Trello no devolvió una confirmación verificable.');
     success('Incidencia registrada en Trello');
-    log(`\nTarjeta:\n${registration.url}\n\nLista:\nDetected`);
+    log(`\nTarjeta:\n${registration.url}\n\nLista:\n${registration.listName ?? 'Detected'}`);
+    if (registration.attachments.length > 0) {
+      log(`\nAdjuntos:\n${registration.attachments.map((attachment) => `- ${attachment.kind}: ${attachment.status}`).join('\n')}`);
+    }
     log('\n[1] Abrir tarjeta\n[2] Volver al menú');
     if (await question('> ') === '1' && !(await openCard(registration.url))) log('\nNo fue posible abrir la tarjeta automáticamente.');
     return { status: 'TRELLO_CREATED', incident, ...registration };
@@ -1013,7 +1020,7 @@ function personalization() {
   console.log('TestGenerator puede adaptarse en tres puntos:\n\n1. ENTRADAS\n   Excel\n   JSON\n   Historias de Usuario\n\n2. APLICACIÓN\n   Configuración\n   Componentes de pantalla\n   Datos\n   Estrategia de pruebas\n\n3. SALIDAS\n   Reportes\n   Gestión de incidencias\n\nEl núcleo, controles de calidad y gobierno se reutilizan.');
 }
 async function main() {
-  console.log(`\n${line}\n                 TESTGENERATOR\n           Acelerador de Pruebas QA\n${line}\n\nTransformamos requisitos funcionales en pruebas\nautomatizadas trazables y controladas.`);
+  console.log(`\n${line}\n                 QGenerator\n     Intelligent QA Automation Framework\n${line}\n\nTransformamos requisitos funcionales en pruebas\nautomatizadas trazables y controladas.`);
   while (true) {
     console.log('\n¿Qué desea procesar?\n\n[1] Historia de Usuario\n[2] Archivo Excel\n[3] Archivo JSON\n[4] Ver pruebas existentes\n[5] Ejecutar una demostración\n[P] ¿Cómo se adapta TestGenerator a otro proyecto?\n[0] Salir');
     const choice = (await ui.question('\nSeleccione una opción:\n> ')).toLowerCase();
