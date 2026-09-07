@@ -17,6 +17,7 @@ export interface TrelloEvidenceUploadResult {
 }
 
 export interface TrelloIncidentArtifact extends IncidentArtifact {
+  readonly duplicate: boolean;
   readonly attachments: readonly TrelloEvidenceUploadResult[];
 }
 
@@ -30,9 +31,20 @@ export class TrelloIncidentProvider implements IncidentProvider {
   ) {}
 
   async writePreview(incident: IncidentModel): Promise<TrelloIncidentArtifact> {
+    const existing = await this.findExistingIncident(incident);
+    if (existing) {
+      return { providerId: this.id, path: existing.url, createdAt: new Date().toISOString(), duplicate: true, attachments: [] };
+    }
+
     const card = await this.client.createCard(this.listId, mapIncidentToTrelloCard(incident, this.environment));
     const attachments = await this.uploadEvidence(card.id, incident);
-    return { providerId: this.id, path: card.url, createdAt: new Date().toISOString(), attachments };
+    return { providerId: this.id, path: card.url, createdAt: new Date().toISOString(), duplicate: false, attachments };
+  }
+
+  private async findExistingIncident(incident: IncidentModel): Promise<{ readonly url: string } | undefined> {
+    if (typeof this.client.getCards !== 'function') return undefined;
+    const cards = await this.client.getCards(this.listId);
+    return cards.find((card) => isSameIncidentText(`${card.name}\n${card.desc}`, incident));
   }
 
   private async uploadEvidence(cardId: string, incident: IncidentModel): Promise<readonly TrelloEvidenceUploadResult[]> {
@@ -75,4 +87,8 @@ export class TrelloIncidentProvider implements IncidentProvider {
     }
     return results;
   }
+}
+
+function isSameIncidentText(text: string, incident: IncidentModel): boolean {
+  return text.includes(incident.caseId) && text.includes(incident.context?.marker ?? 'SIMULATED_DEMO_FAILURE');
 }

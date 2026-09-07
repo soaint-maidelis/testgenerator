@@ -254,7 +254,7 @@ test('keeps the batch execution menu open after opening its report', async () =>
   assert.ok(output.includes('Reporte abierto para 2 tests'));
 });
 
-test('offers direct Trello registration after a failed batch and keeps the menu usable', async () => {
+test('offers direct incident registration after a failed batch and keeps the menu usable', async () => {
   const choices = ['2', '3'];
   const output = [];
   let registrations = 0;
@@ -267,7 +267,7 @@ test('offers direct Trello registration after a failed batch and keeps the menu 
     },
   );
   assert.equal(registrations, 1);
-  assert.equal(output.filter((message) => message.includes('[2] Registrar incidencia en Trello')).length, 2);
+  assert.equal(output.filter((message) => message.includes('[2] Registrar incidencia')).length, 2);
 });
 
 test('loads the controlled incident created by the current failed execution', () => {
@@ -408,7 +408,7 @@ function incidentDependencies(choices, overrides = {}) {
   };
 }
 
-test('incident UX preserves local evidence without calling Trello', async () => {
+test('incident UX preserves local evidence without calling a provider', async () => {
   let registrations = 0;
   const setup = incidentDependencies(['2'], { register: async () => { registrations += 1; } });
   const result = await incidentFlow(setup.dependencies);
@@ -419,33 +419,70 @@ test('incident UX preserves local evidence without calling Trello', async () => 
 
 test('incident UX explicitly registers in Trello, shows its URL, and can open it', async () => {
   let opened = '';
-  const setup = incidentDependencies(['1', '1'], {
-    register: async () => 'Board name: Demo-Playwright\nList name: Bugs\nMarker verified: YES\nCard verified: YES\nAttachment screenshot: LINKED\nAttachment video: LINKED\nCard URL: https://trello.com/c/example',
+  let selectedProvider = '';
+  const setup = incidentDependencies(['1', '1', '1'], {
+    register: async (_incident, provider) => {
+      selectedProvider = provider;
+      return 'Provider: Trello\nTarget: Demo-Playwright / Bugs\nMarker verified: YES\nCard verified: YES\nIncident verified: YES\nAttachment screenshot: LINKED\nAttachment video: LINKED\nIncident URL: https://trello.com/c/example';
+    },
     openCard: async (url) => { opened = url; return true; },
   });
   const result = await incidentFlow(setup.dependencies);
-  assert.equal(result.status, 'TRELLO_CREATED');
+  assert.equal(result.status, 'INCIDENT_CREATED');
+  assert.equal(result.provider, 'trello');
+  assert.equal(selectedProvider, 'trello');
   assert.equal(result.boardFound, true);
   assert.equal(result.listFound, true);
   assert.deepEqual(result.attachments, [{ kind: 'screenshot', status: 'LINKED' }, { kind: 'video', status: 'LINKED' }]);
   assert.equal(opened, 'https://trello.com/c/example');
-  assert.match(setup.output.join('\n'), /Incidencia registrada en Trello[\s\S]*https:\/\/trello.com\/c\/example[\s\S]*Lista:\nBugs[\s\S]*screenshot: LINKED[\s\S]*video: LINKED/);
+  assert.match(setup.output.join('\n'), /Incidencia registrada en Trello[\s\S]*https:\/\/trello.com\/c\/example[\s\S]*Destino:\nDemo-Playwright \/ Bugs[\s\S]*screenshot: LINKED[\s\S]*video: LINKED/);
 });
 
-test('incident UX reports a sanitized Trello failure and preserves local evidence', async () => {
-  const secret = 'private-trello-token';
-  const setup = incidentDependencies(['1'], { register: async () => { throw new Error(`Request failed token=${secret}`); } });
+test('incident UX can register in Azure DevOps and Jira through the provider menu', async () => {
+  const azure = incidentDependencies(['1', '2', '2'], {
+    register: async (_incident, provider) => `Provider: Azure DevOps\nTarget: Org / Project\nDuplicate: NO\nMarker verified: YES\nWork item verified: YES\nIncident verified: YES\nAttachment trace: LINKED\nIncident URL: https://dev.azure.com/org/project/_workitems/edit/123`,
+  });
+  const azureResult = await incidentFlow(azure.dependencies);
+  assert.equal(azureResult.status, 'INCIDENT_CREATED');
+  assert.equal(azureResult.provider, 'azure');
+  assert.match(azure.output.join('\n'), /Incidencia registrada en Azure DevOps[\s\S]*trace: LINKED/);
+
+  const jira = incidentDependencies(['1', '3', '2'], {
+    register: async (_incident, provider) => `Provider: Jira\nTarget: QA / Bug\nMarker verified: YES\nIssue verified: YES\nIncident verified: YES\nIncident URL: https://example.atlassian.net/browse/QA-1`,
+  });
+  const jiraResult = await incidentFlow(jira.dependencies);
+  assert.equal(jiraResult.status, 'INCIDENT_CREATED');
+  assert.equal(jiraResult.provider, 'jira');
+  assert.match(jira.output.join('\n'), /Incidencia registrada en Jira[\s\S]*https:\/\/example.atlassian.net\/browse\/QA-1/);
+});
+
+test('incident UX reports an existing provider incident without treating it as a failure', async () => {
+  const setup = incidentDependencies(['1', '2', '2'], {
+    register: async () => 'Provider: Azure DevOps\nTarget: Org / Project\nDuplicate: YES\nMarker verified: YES\nWork item verified: YES\nIncident verified: YES\nIncident URL: https://dev.azure.com/org/project/_workitems/edit/456',
+  });
+  const result = await incidentFlow(setup.dependencies);
+  assert.equal(result.status, 'INCIDENT_CREATED');
+  assert.equal(result.duplicate, true);
+  assert.match(setup.output.join('\n'), /Incidencia ya existente en Azure DevOps[\s\S]*https:\/\/dev.azure.com\/org\/project\/_workitems\/edit\/456/);
+});
+
+test('incident UX reports a sanitized provider failure and preserves local evidence', async () => {
+  const secret = 'private-jira-token';
+  const setup = incidentDependencies(['1', '3'], { register: async () => { throw new Error(`Request failed token=${secret}`); } });
   const previous = process.env.TRELLO_API_TOKEN;
-  process.env.TRELLO_API_TOKEN = secret;
+  const previousJira = process.env.JIRA_API_TOKEN;
+  process.env.JIRA_API_TOKEN = secret;
   try {
     const result = await incidentFlow(setup.dependencies);
-    assert.equal(result.status, 'TRELLO_FAILED');
+    assert.equal(result.status, 'INCIDENT_FAILED');
+    assert.equal(result.provider, 'jira');
     assert.match(setup.output.join('\n'), /No fue posible registrar[\s\S]*La evidencia local se conserva/);
     assert.doesNotMatch(setup.output.join('\n'), new RegExp(secret));
   } finally {
     if (previous === undefined) delete process.env.TRELLO_API_TOKEN; else process.env.TRELLO_API_TOKEN = previous;
+    if (previousJira === undefined) delete process.env.JIRA_API_TOKEN; else process.env.JIRA_API_TOKEN = previousJira;
   }
-  assert.doesNotMatch(sanitizeIncidentMessage(new Error(`key=${secret}`), { TRELLO_API_KEY: secret }), new RegExp(secret));
+  assert.doesNotMatch(sanitizeIncidentMessage(new Error(`key=${secret}`), { JIRA_API_TOKEN: secret }), new RegExp(secret));
 });
 
 test('incident UX cancellation never creates a Trello card', async () => {

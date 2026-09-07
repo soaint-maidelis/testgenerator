@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./artifacts/incident-tools",
+    "rootDir": "."
+  },
+  "include": [
+    "src/core/**/*.ts",
+    "src/integrations/**/*.ts",
+    "tools/incidents/**/*.ts"
+  ],
+  "exclude": ["integrations/**", "reporters/**", "scripts/**"]
+}

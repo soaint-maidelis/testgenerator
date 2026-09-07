@@ -37,6 +37,7 @@ function run(script, args = [], visible = false, extraEnv = {}) {
     'generation:plan': ['tools/generation/generation-cli.cjs', 'plan'],
     'demo:trello-incident': ['tools/trello/trello-cli.cjs', 'demo-incident'],
     'submit:trello-incident': ['tools/trello/trello-cli.cjs', 'submit-incident'],
+    'submit:provider-incident': ['tools/incidents/incident-cli.cjs', 'submit-incident'],
   };
   const command = commands[script];
   if (!command) throw new Error(`Unsupported internal operation: ${script}`);
@@ -837,7 +838,7 @@ async function batchExecutionMenu(execution, dependencies = {}) {
   const registerIncident = dependencies.registerIncident || ((currentExecution) => incidentFlow({ prepare: () => loadExecutionIncident(currentExecution), initialAction: 'register' }));
   while (true) {
     log(execution.result === 'FAIL'
-      ? '\n[1] Ver reporte\n[2] Registrar incidencia en Trello\n[3] Menú principal'
+      ? '\n[1] Ver reporte\n[2] Registrar incidencia\n[3] Menú principal'
       : '\n[1] Ver reporte\n[2] Menú principal');
     const choice = await question('> ');
     if (choice === '1') {
@@ -941,23 +942,40 @@ function friendlyClassification(value) {
 }
 function sanitizeIncidentMessage(error, environment = process.env) {
   let message = error instanceof Error ? error.message : String(error);
-  for (const name of ['TRELLO_API_KEY', 'TRELLO_API_TOKEN']) {
+  for (const name of ['TRELLO_API_KEY', 'TRELLO_API_TOKEN', 'JIRA_API_TOKEN', 'AZURE_DEVOPS_PAT']) {
     const secret = environment[name];
     if (secret) message = message.split(secret).join('[REDACTED]');
   }
   return message.replace(/([?&](?:key|token)=)[^&\s]+/gi, '$1[REDACTED]').replace(/\u001b\[[0-9;]*m/g, '').trim();
 }
-function parseTrelloRegistration(output) {
+function parseIncidentRegistration(output) {
   return {
-    url: output.match(/Card URL:\s*(https:\/\/trello\.com\/\S+)/)?.[1],
+    provider: output.match(/^Provider:\s*(.+)$/m)?.[1],
+    target: output.match(/^Target:\s*(.+)$/m)?.[1],
+    duplicate: output.match(/^Duplicate:\s*YES$/m) !== null,
+    url: output.match(/(?:Incident|Card|Issue|Work item) URL:\s*(https:\/\/\S+)/)?.[1],
     boardName: output.match(/^Board name:\s*(.+)$/m)?.[1],
     listName: output.match(/^List name:\s*(.+)$/m)?.[1],
-    boardFound: /^Board name:\s*\S.+$/m.test(output),
-    listFound: /^List name:\s*\S.+$/m.test(output),
+    boardFound: /^Board name:\s*\S.+$/m.test(output) || /^Target:\s*\S.+$/m.test(output),
+    listFound: /^List name:\s*\S.+$/m.test(output) || /^Target:\s*\S.+$/m.test(output),
     markerVerified: output.includes('Marker verified: YES'),
-    cardVerified: output.includes('Card verified: YES'),
+    cardVerified: output.includes('Card verified: YES') || output.includes('Issue verified: YES') || output.includes('Work item verified: YES') || output.includes('Incident verified: YES'),
+    incidentVerified: output.includes('Incident verified: YES'),
     attachments: [...output.matchAll(/^Attachment\s+(\w+):\s+([A-Z_]+)/gm)].map((match) => ({ kind: match[1], status: match[2] })),
   };
+}
+const parseTrelloRegistration = parseIncidentRegistration;
+function providerLabel(provider) {
+  return ({ trello: 'Trello', azure: 'Azure DevOps', jira: 'Jira' })[provider] || provider;
+}
+async function chooseIncidentProvider(question, log, directProvider) {
+  if (directProvider) return directProvider;
+  log('\nSeleccione destino de incidencia:\n\n[1] Trello\n[2] Azure DevOps\n[3] Jira\n[0] Volver');
+  const choice = await question('> ');
+  if (choice === '1') return 'trello';
+  if (choice === '2') return 'azure';
+  if (choice === '3') return 'jira';
+  return undefined;
 }
 async function incidentFlow(dependencies = {}) {
   const question = dependencies.question || ((prompt) => ui.question(prompt));
@@ -965,8 +983,9 @@ async function incidentFlow(dependencies = {}) {
   const success = dependencies.success || check;
   const heading = dependencies.title || title;
   const prepare = dependencies.prepare || (() => { runDemoIncidentLocally(); return loadPreparedIncident(); });
-  const register = dependencies.register || ((preparedIncident) => run('submit:trello-incident', [`artifacts/incidents/${preparedIncident.applicationId}-${preparedIncident.caseId}.json`]));
+  const register = dependencies.register || ((preparedIncident, provider) => run('submit:provider-incident', [provider, `artifacts/incidents/${preparedIncident.applicationId}-${preparedIncident.caseId}.json`]));
   const openCard = dependencies.openCard || openUrl;
+  const directProvider = dependencies.provider;
   log('\nEjecutando escenario controlado...');
   const incident = await prepare();
   const classification = friendlyClassification(incident.classification?.classification);
@@ -975,24 +994,26 @@ async function incidentFlow(dependencies = {}) {
   heading('INCIDENCIA PREPARADA');
   log(`Clasificación:\n${classification}\n\nCaso:\n${incident.caseId}\n\nEvidencia:\nDisponible`);
   const directRegistration = dependencies.initialAction === 'register';
-  if (!directRegistration) log('\n¿Qué desea hacer?\n\n[1] Registrar incidencia en Trello\n[2] Guardar solo evidencia local\n[3] Cancelar');
+  if (!directRegistration) log('\n¿Qué desea hacer?\n\n[1] Registrar incidencia\n[2] Guardar solo evidencia local\n[3] Cancelar');
   const choice = directRegistration ? '1' : await question('> ');
   if (choice === '2') { log('\nLa evidencia local se conserva.'); return { status: 'LOCAL_ONLY', incident }; }
   if (choice !== '1') { log('\nRegistro cancelado. La evidencia local se conserva.'); return { status: 'CANCELLED', incident }; }
+  const provider = await chooseIncidentProvider(question, log, directProvider);
+  if (!provider) { log('\nRegistro cancelado. La evidencia local se conserva.'); return { status: 'CANCELLED', incident }; }
   try {
-    const registration = parseTrelloRegistration(await register(incident));
-    if (!registration.url || !registration.boardFound || !registration.listFound || !registration.markerVerified || !registration.cardVerified) throw new Error('Trello no devolvió una confirmación verificable.');
-    success('Incidencia registrada en Trello');
-    log(`\nTarjeta:\n${registration.url}\n\nLista:\n${registration.listName ?? 'Detected'}`);
+    const registration = parseIncidentRegistration(await register(incident, provider));
+    if (!registration.url || !registration.markerVerified || !registration.cardVerified) throw new Error(`${providerLabel(provider)} no devolvió una confirmación verificable.`);
+    success(registration.duplicate ? `Incidencia ya existente en ${providerLabel(provider)}` : `Incidencia registrada en ${providerLabel(provider)}`);
+    log(`\nIncidencia:\n${registration.url}\n\nDestino:\n${registration.target ?? registration.listName ?? providerLabel(provider)}`);
     if (registration.attachments.length > 0) {
       log(`\nAdjuntos:\n${registration.attachments.map((attachment) => `- ${attachment.kind}: ${attachment.status}`).join('\n')}`);
     }
     log('\n[1] Abrir tarjeta\n[2] Volver al menú');
     if (await question('> ') === '1' && !(await openCard(registration.url))) log('\nNo fue posible abrir la tarjeta automáticamente.');
-    return { status: 'TRELLO_CREATED', incident, ...registration };
+    return { status: 'INCIDENT_CREATED', incident, ...registration, provider };
   } catch (error) {
-    log(`\nNo fue posible registrar la incidencia en Trello.\n\nMotivo:\n${sanitizeIncidentMessage(error)}\n\nLa evidencia local se conserva.`);
-    return { status: 'TRELLO_FAILED', incident };
+    log(`\nNo fue posible registrar la incidencia en ${providerLabel(provider)}.\n\nMotivo:\n${sanitizeIncidentMessage(error)}\n\nLa evidencia local se conserva.`);
+    return { status: 'INCIDENT_FAILED', provider, incident };
   }
 }
 function runDemoIncidentLocally() {
@@ -1003,7 +1024,12 @@ function runDemoIncidentLocally() {
 async function openUrl(url) {
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== 'https:' || (parsed.hostname !== 'trello.com' && !parsed.hostname.endsWith('.trello.com'))) return false;
+    const allowed = parsed.hostname === 'trello.com'
+      || parsed.hostname.endsWith('.trello.com')
+      || parsed.hostname === 'dev.azure.com'
+      || parsed.hostname.endsWith('.visualstudio.com')
+      || parsed.hostname.endsWith('.atlassian.net');
+    if (parsed.protocol !== 'https:' || !allowed) return false;
     await launchDefaultBrowser(url);
     return true;
   } catch { return false; }

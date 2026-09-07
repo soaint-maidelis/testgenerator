@@ -92,6 +92,34 @@ test('provider uploads available screenshot, video, and trace evidence to Trello
   }
 });
 
+test('provider reuses an existing Trello card instead of creating a duplicate', async () => {
+  let creates = 0;
+  let uploads = 0;
+  const client = {
+    getCards: async () => [{
+      id: 'existing-card',
+      url: 'https://trello.com/c/existing',
+      idList: 'list-id',
+      name: '[SIMULATED_DEMO_FAILURE] SD-INCIDENT-001',
+      desc: 'SIMULATED_DEMO_FAILURE SD-INCIDENT-001',
+    }],
+    createCard: async () => {
+      creates += 1;
+      return { id: 'card-id', url: 'https://trello.com/c/example' };
+    },
+    uploadAttachment: async () => {
+      uploads += 1;
+      return { id: 'attachment-1', name: 'file.png', url: 'https://trello.com/attachment' };
+    },
+  } as unknown as TrelloClient;
+
+  const artifact = await new TrelloIncidentProvider(client, 'list-id').writePreview(incident);
+  assert.equal(artifact.duplicate, true);
+  assert.equal(artifact.path, 'https://trello.com/c/existing');
+  assert.equal(creates, 0);
+  assert.equal(uploads, 0);
+});
+
 test('client failures never leak API key or token', async () => {
   const failingFetch = (async () => new Response('', { status: 401 })) as typeof fetch;
   const client = new TrelloClient(loadTrelloConfig(environment), failingFetch);

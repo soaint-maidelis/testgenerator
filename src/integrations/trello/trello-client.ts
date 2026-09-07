@@ -37,6 +37,10 @@ export class TrelloClient {
     return this.request<TrelloCard>('POST', '/cards', { idList: listId, name: payload.name, desc: payload.desc });
   }
 
+  getCards(listId: string): Promise<readonly TrelloCardDetails[]> {
+    return this.request<readonly TrelloCardDetails[]>('GET', `/lists/${encodeURIComponent(listId)}/cards`, { fields: 'id,name,desc,idList,url', filter: 'open' });
+  }
+
   getCard(cardId: string): Promise<TrelloCardDetails> {
     return this.request<TrelloCardDetails>('GET', `/cards/${encodeURIComponent(cardId)}`, { fields: 'name,desc,idList,url' });
   }
